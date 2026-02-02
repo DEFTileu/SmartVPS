@@ -50,19 +50,24 @@ def chunk(lst: List[str], n: int):
 
 def main_menu() -> InlineKeyboardMarkup:
     rows = []
+
     for pair in chunk(MENU_ORDER, 2):
         rows.append([
-            InlineKeyboardButton(text=combo, callback_data=f"agent:{combo}")
+            InlineKeyboardButton(
+                text=combo,
+                callback_data=f"agent:{combo}"
+            )
             for combo in pair
         ])
-    return InlineKeyboardMarkup(inline_keyboard=rows)
 
-def contact_kb(username: str) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text=f"@{username}", url=f"https://t.me/{username}")]
-        ]
-    )
+    rows.append([
+        InlineKeyboardButton(
+            text="Бағалар 💰",
+            callback_data="prices"
+        )
+    ])
+
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 MAIN_MENU = main_menu()
 
@@ -83,6 +88,28 @@ async def start(message: Message):
         "Call Centre-ге қош келдіңіз 👋\n\nКомбинацияны таңдаңыз ⬇️",
         reply_markup=MAIN_MENU,
     )
+
+@dp.callback_query(F.data == "prices")
+async def show_prices(callback: CallbackQuery):
+    text = (
+        "🏆 НЕГІЗГІ БАҒА\n"
+        "VIP — ТЕГІН\n"
+        "PREMIUM — 35 000 тг\n"
+        "STANDARD — 45 000 тг\n\n"
+        "🎯 IELTS\n"
+        "VIP — ТЕГІН\n"
+        "PREMIUM — 27 000 тг\n"
+        "STANDARD — 34 000 тг\n\n"
+        "🎨 ШЫҒАРМАШЫЛЫҚ\n"
+        "VIP — ТЕГІН\n"
+        "PREMIUM — 15 000 тг\n"
+        "STANDARD — 18 000 тг"
+    )
+
+    await callback.message.answer(text)
+    await callback.answer()
+
+
 
 @dp.callback_query(F.data.startswith("agent:"))
 async def send_agent(callback: CallbackQuery):
