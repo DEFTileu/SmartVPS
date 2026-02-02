@@ -48,23 +48,27 @@ MENU_ORDER: List[str] = list(AGENTS.keys())
 def chunk(lst: List[str], n: int):
     return [lst[i:i + n] for i in range(0, len(lst), n)]
 
+def contact_kb(username: str) -> InlineKeyboardMarkup:
+    u = username.strip()
+    if u.startswith("@"):
+        u = u[1:]
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=f"@{u}", url=f"https://t.me/{u}")]
+        ]
+    )
+
 def main_menu() -> InlineKeyboardMarkup:
     rows = []
 
     for pair in chunk(MENU_ORDER, 2):
         rows.append([
-            InlineKeyboardButton(
-                text=combo,
-                callback_data=f"agent:{combo}"
-            )
+            InlineKeyboardButton(text=combo, callback_data=f"agent:{combo}")
             for combo in pair
         ])
 
     rows.append([
-        InlineKeyboardButton(
-            text="Бағалар 💰",
-            callback_data="prices"
-        )
+        InlineKeyboardButton(text="Бағалар 💰", callback_data="prices")
     ])
 
     return InlineKeyboardMarkup(inline_keyboard=rows)
@@ -91,6 +95,12 @@ async def start(message: Message):
 
 @dp.callback_query(F.data == "prices")
 async def show_prices(callback: CallbackQuery):
+    logger.info(
+        "CLICK | user_id=%s username=%s action=prices",
+        callback.from_user.id,
+        callback.from_user.username,
+    )
+
     text = (
         "🏆 НЕГІЗГІ БАҒА\n"
         "VIP — ТЕГІН\n"
@@ -109,8 +119,6 @@ async def show_prices(callback: CallbackQuery):
     await callback.message.answer(text)
     await callback.answer()
 
-
-
 @dp.callback_query(F.data.startswith("agent:"))
 async def send_agent(callback: CallbackQuery):
     combo = callback.data.split(":", 1)[1]
@@ -124,11 +132,7 @@ async def send_agent(callback: CallbackQuery):
     )
 
     if combo not in AGENTS:
-        logger.error(
-            "NOT_FOUND | user_id=%s combo=%s",
-            user.id,
-            combo,
-        )
+        logger.error("NOT_FOUND | user_id=%s combo=%s", user.id, combo)
         await callback.answer("Комбинация табылмады", show_alert=True)
         return
 
